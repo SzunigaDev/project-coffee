@@ -71,24 +71,45 @@ function completeOrder() {
 }
 
 function printTicket(ticketContent) {
-  const printWindow = window.open('', '', 'width=600,height=400');
-  printWindow.document.write('<html><head><title>Ticket</title></head><body>');
-  printWindow.document.write('<h1>Ticket de Venta</h1>');
-  printWindow.document.write(`<p>Mesa: ${ticketContent.table_number}</p>`);
-  printWindow.document.write(`<p>Hora del Pedido: ${ticketContent.order_time}</p>`);
-  printWindow.document.write('<h2>Platillos:</h2>');
-  printWindow.document.write('<ul>');
+  const printWindow = window.open('', '', 'width=400,height=600');
+  printWindow.document.write('<html><head><title>Ticket de Venta</title>');
+  printWindow.document.write('<style>body{font-family:"Courier New",Courier,monospace;max-width:400px;margin:auto;border:1px solid #000;padding:20px}.header,.footer{text-align:center;margin-bottom:20px}.header h2,.header h3,.footer p{margin:5px 0}.content{border-top:1px dashed #000;border-bottom:1px dashed #000;padding:10px 0}.content table{width:100%}.content table,.content th,.content td{border:none;border-collapse:collapse;text-align:left}.content th,.content td{padding:5px 0}.total{text-align:right;margin-top:10px}.barcode{text-align:center;margin-top:20px}</style>');
+  printWindow.document.write('</head><body>');
+  printWindow.document.write('<div class="header">');
+  printWindow.document.write('<h2>Mi Cafetería Feliz</h2>');
+  printWindow.document.write('<p>RFC: ABC-123456-XYZ</p>');
+  printWindow.document.write('<p>Fecha: ' + ticketContent.order_time + '</p>');
+  printWindow.document.write('<p>Factura No: ' + String(ticketContent.id).padStart(10, '0') + '</p>');
+  printWindow.document.write('<p>Av. Ficticia 123, Ciudad, País</p>');
+  printWindow.document.write('<p>TEL: 123-456-7890</p>');
+  printWindow.document.write('</div>');
+  printWindow.document.write('<div class="content">');
+  printWindow.document.write('<table>');
+  printWindow.document.write('<thead><tr><th>CANT</th><th>DESCRIPCIÓN</th><th>PRECIO</th><th>IMPORTE</th></tr></thead>');
+  printWindow.document.write('<tbody>');
   ticketContent.items.forEach(item => {
-    printWindow.document.write(`<li>${item.quantity} x ${item.name} - $${item.price}</li>`);
+      printWindow.document.write('<tr><td>' + item.quantity + '</td><td>' + item.name + '</td><td>' + item.price.toFixed(2) + '</td><td>' + (item.price * item.quantity).toFixed(2) + '</td></tr>');
   });
-  printWindow.document.write('</ul>');
-  printWindow.document.write(`<p>Total: $${ticketContent.total_amount}</p>`);
-  printWindow.document.write(`<p>Pago: $${ticketContent.payment_amount}</p>`);
-  printWindow.document.write(`<p>Cambio: $${ticketContent.change.toFixed(2)}</p>`);
+  printWindow.document.write('</tbody></table></div>');
+  printWindow.document.write('<div class="total"><p>Total Neto: $' + ticketContent.total_amount.toFixed(2) + '</p>');
+  printWindow.document.write('<p>Pago: $' + ticketContent.payment_amount.toFixed(2) + '</p>');
+  printWindow.document.write('<p>Cambio: $' + ticketContent.change_amount.toFixed(2) + '</p>');
+  printWindow.document.write('</div>');
+  printWindow.document.write('<div class="footer">');
+  printWindow.document.write('<p>Vendedor: ' + ticketContent.user_id + '</p>');
+  printWindow.document.write('<p>Folio Interno: ' + String(ticketContent.id).padStart(10, '0')  + '</p>');
+  printWindow.document.write('<p>¡Gracias por su compra!</p>');
+  printWindow.document.write('</div>');
+  printWindow.document.write('<div class="barcode">');
+  printWindow.document.write('<img src="https://barcode.tec-it.com/barcode.ashx?data=' + String(ticketContent.id).padStart(10, '0') + '&code=Code128" alt="Código de Barras">');
+  printWindow.document.write('</div>');
+  printWindow.document.write('<div class="payment">');
+  printWindow.document.write('</div>');
   printWindow.document.write('</body></html>');
   printWindow.document.close();
   printWindow.print();
 }
+
 
 function reprintTicket(orderId) {
   fetch(`/orders/${orderId}`)
@@ -99,12 +120,14 @@ function reprintTicket(orderId) {
         return;
       }
       const ticketContent = {
+        'id':order.id,
         'table_number': order.table_number,
         'order_time': order.order_time,
         'total_amount': order.total_amount,
         'items': order.items,
         'payment_amount': order.payment_amount,
-        'change': order.change
+        'change_amount': order.change,
+        'user_id': order.user_id
       };
       printTicket(ticketContent);
     });

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, g, jsonify, session
+from flask import Blueprint, render_template, request, g, jsonify, session
 import sqlite3
 from datetime import datetime
 from .decorators import login_required
@@ -64,6 +64,10 @@ def get_order(order_id):
             'quantity': item[1],
             'price': item[2]
         })
+    
+    user_name = db.execute('SELECT first_name, last_name FROM users WHERE id = ?', (session.get('user_id'),)).fetchone()
+    full_user_name = f"{user_name[0]} {user_name[1]}"
+
     order_data = {
         'id': order[0],
         'table_number': order[1],
@@ -73,7 +77,8 @@ def get_order(order_id):
         'items': order_items,
         'priority': order_dict.get(order[0], 1),
         'payment_amount': order[5],
-        'change': order[6]
+        'change': order[6],
+        'user_id': full_user_name
     }
     return jsonify(order_data)
 

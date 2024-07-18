@@ -9,7 +9,7 @@ from routes.dishes import dishes_bp
 from routes.decorators import login_required
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Reemplaza con tu clave secreta generada
+app.secret_key = 'f8da8eb2a7412a5d67d91d8f15e4ab169812b8b4700f0af6761956774a4f8c2a'
 
 app.register_blueprint(users_bp)
 app.register_blueprint(auth_bp)

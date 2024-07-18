@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block title %}Caja Registradora{% endblock %}
+
+{% block content %}
+<h1 class="text-center text-light">Caja Registradora</h1>
+<div class="row">
+  <div class="col-md-4">
+    <div class="list-group" id="orders-list">
+      {% for order in orders %}
+      <a href="#" class="list-group-item list-group-item-action" onclick="showOrderDetails('{{ order.id }}')">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>Mesa {{ order.table_number }}</div>
+          <span class="badge bg-{{ 'success' if order.status == 'Pagado' else 'warning' }}">{{ order.status }}</span>
+        </div>
+        <div>Total: ${{ order.total_amount }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card mb-4">
+      <div class="card-body" id="order-details">
+        <h5 class="card-title">Seleccione un pedido para ver los detalles</h5>
+      </div>
+    </div>
+    <div id="show-hide">
+      <div class="input-group mb-3">
+        <span class="input-group-text">Total</span>
+        <input type="text" class="form-control" id="order-total" readonly>
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">Monto con el que pagan</span>
+        <input type="number" class="form-control" id="payment-amount">
+      </div>
+      <div class="row mx-1">
+        <button class="btn btn-success btn-sm rounded-pill mx-auto" onclick="completeOrder()">Cobrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script src="{{ url_for('static', filename='javascript/cashier.js') }}"></script>
+{% endblock %}

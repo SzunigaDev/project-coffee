@@ -1,0 +1,39 @@
+
+.navbar {
+  background-color: rgba(0, 0, 0, 0.5); /* Fondo más oscuro */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Sombra */
+}
+.nav-link {
+  color: white !important;
+  transition: color 0.3s ease;
+}
+.nav-link:hover, .nav-link.active {
+  color: #FFD700 !important; /* Cambiar color al pasar el cursor y cuando está seleccionado */
+}
+.navbar-brand {
+  color: white !important;
+}
+.navbar-brand:hover {
+  color: #FFD700 !important; /* Cambiar color al pasar el cursor */
+}
+
+
+.card {
+  background-color: rgba(0, 0, 0, 0.5) !important; /* Fondo más oscuro */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important; /* Sombra */
+}
+
+.card-header{
+  color: whitesmoke !important; 
+}
+.card-body{
+  color: whitesmoke !important; 
+}
+
+.dropdown-item{
+  font-size: 12px !important; 
+}
+
+.special-card{
+  background-color: azure !important;
+}

@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+{% block title %}Platillos{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dishes.css') }}">
+{% endblock %}
+
+{% block content %}
+<h1 class="text-center">Lista de Platillos</h1>
+<div class="row">
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Agregar Platillo</h5>
+        <form method="post" action="{{ url_for('dishes.dishes') }}" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="name" class="form-label">Nombre del Platillo</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="price" class="form-label">Precio</label>
+            <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+          </div>
+          <div class="mb-3">
+            <label for="preparation_time" class="form-label">Tiempo de Preparación (minutos)</label>
+            <input type="number" class="form-control" id="preparation_time" name="preparation_time" required>
+          </div>
+          <div class="mb-3">
+            <label for="image" class="form-label">Imagen del Platillo</label>
+            <input type="file" class="form-control" id="image" name="image" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Agregar Platillo</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Platillos Existentes</h5>
+        <div class="row">
+          {% for dish in dishes %}
+          <div class="col-md-12">
+            <div class="card mb-3">
+              <div class="row g-0">
+                <div class="col-md-4">
+                  <img src="{{ dish[4] }}" class="img-fluid rounded-circle dish-img m-2" alt="{{ dish[1] }}">
+                </div>
+                <div class="col-md-8">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ dish[1] }}</h5>
+                    <p class="card-text">Precio: ${{ dish[2] }}</p>
+                    <p class="card-text">Tiempo de Preparación: {{ dish[3] }} minutos</p>
+                    <a href="{{ url_for('dishes.edit_dish', id=dish[0]) }}" class="btn btn-warning">Editar</a>
+                    <form action="{{ url_for('dishes.delete_dish', id=dish[0]) }}" method="post" style="display:inline;">
+                      <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

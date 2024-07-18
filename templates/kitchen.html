@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+
+{% block title %}Cocina{% endblock %}
+
+{% block content %}
+<h1 class="text-center text-light">Pedidos en Cocina</h1>
+<div class="row">
+  {% for order in orders %}
+  <div class="col-md-4 d-flex align-items-stretch">
+    <div class="card mb-4 flex-fill shadow-lg border border-primary border-5" onclick="showOrderModal('{{ order.id }}')">
+      <div class="card-body">
+        <div class="row justify-content-between">
+          <div class="col-md-9"><h5 class="card-title">Mesa {{ order.table_number }} </h5></div>
+          <div class="col-md-3"><span class="badge bg-primary">Prioridad {{ order.priority }}</span></div> 
+        </div>
+        <p class="card-text">Hora del Pedido: {{ order.order_time }}</p>
+        
+        <h6>Items:</h6>
+        <ul>
+          {% for item in order['items'] %}
+          <li>{{ item.quantity }} x {{ item.name }} </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="orderModalLabel">Detalles del Pedido</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Aquí se llenará con el contenido del pedido -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary px-5 rounded-pill mx-auto" id="complete-order-button" onclick="completeOrder()">Entregar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script src="{{ url_for('static', filename='javascript/kitchen.js') }}"></script>
+{% endblock %}

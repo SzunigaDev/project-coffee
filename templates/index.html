@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center text-light">Dashboard</h1>
+    
+    <div class="row">
+        <!-- Ventas diarias -->
+        <div class="col-md-6">
+            <div class="card mb-4 special-card">
+                <div class="card-header text-dark">Ventas Diarias</div>
+                <div class="card-body">
+                    <canvas id="dailySalesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Usuarios -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">Usuarios</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                <td>{{ user.email }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Platillos -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">Platillos</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Precio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dish in dishes %}
+                            <tr>
+                                <td>{{ dish.id }}</td>
+                                <td>{{ dish.name }}</td>
+                                <td>{{ dish.price }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Ventas por Platillo -->
+        <div class="col-md-6">
+            <div class="card mb-4 special-card">
+                <div class="card-header text-dark">Ventas por Platillo</div>
+                <div class="card-body">
+                    <canvas id="salesByDishChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Datos de ventas diarias
+    const dailySales = {{ daily_sales|tojson }};
+    console.log(dailySales)
+    const dailySalesLabels = dailySales.map(sale => sale.date);
+    const dailySalesData = dailySales.map(sale => sale.total_sales);
+
+    const dailySalesChartData = {
+        labels: dailySalesLabels,
+        datasets: [{
+            label: 'Ventas Diarias',
+            data: dailySalesData,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    const dailySalesChartConfig = {
+        type: 'line',
+        data: dailySalesChartData,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    };
+
+    const dailySalesChart = new Chart(
+        document.getElementById('dailySalesChart'),
+        dailySalesChartConfig
+    );
+
+    // Datos de ventas por platillo
+    const dishes = {{ dishes|tojson }};
+    const dishLabels = dishes.map(dish => dish.name);
+    const dishData = dishes.map(dish => dish.price);
+
+    const salesByDishChartData = {
+        labels: dishLabels,
+        datasets: [{
+            label: 'Ventas por Platillo',
+            data: dishData,
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    const salesByDishChartConfig = {
+        type: 'bar',
+        data: salesByDishChartData,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    };
+
+    const salesByDishChart = new Chart(
+        document.getElementById('salesByDishChart'),
+        salesByDishChartConfig
+    );
+</script>
+{% endblock %}

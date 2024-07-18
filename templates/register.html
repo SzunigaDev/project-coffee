@@ -1,0 +1,115 @@
+{% extends "layout_before_login.html" %}
+
+{% block title %}Registro{% endblock %}
+{% block css %}
+<style>
+.gradient-custom {
+  /* fallback for old browsers */
+  background: #f093fb;
+
+  /* Chrome 10-25, Safari 5.1-6 */
+  background: -webkit-linear-gradient(to bottom right, rgba(240, 147, 251, 1), rgba(245, 87, 108, 1));
+
+  /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background: linear-gradient(to bottom right, rgba(240, 147, 251, 1), rgba(245, 87, 108, 1))
+}
+
+.card-registration .select-input.form-control[readonly]:not([disabled]) {
+  font-size: 1rem;
+  line-height: 2.15;
+  padding-left: .75em;
+  padding-right: .75em;
+}
+.card-registration .select-arrow {
+  top: 13px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="vh-100 ">
+  <div class="container py-5 h-100">
+    <div class="row justify-content-center align-items-center h-100">
+      <div class="col-12 col-lg-9 col-xl-7">
+        <div class="card shadow-2-strong card-registration" style="border-radius: 15px;">
+          <div class="card-body p-4 p-md-5">
+            <h3 class="mb-4 pb-2 pb-md-0 mb-md-5">Registration Form</h3>
+            <form method="post" action="{{ url_for('auth.register') }}">
+
+              <div class="row">
+                <div class="col-md-6 mb-4">
+                  <div data-mdb-input-init class="form-outline">
+                    <input type="text" id="firstName" name="first_name" class="form-control form-control-lg" required />
+                    <label class="form-label" for="firstName">Nombre(s)</label>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                  <div data-mdb-input-init class="form-outline">
+                    <input type="text" id="lastName" name="last_name" class="form-control form-control-lg" required />
+                    <label class="form-label" for="lastName">Apellido(s)</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-4 d-flex align-items-center">
+                  <div data-mdb-input-init class="form-outline datepicker w-100">
+                    <input type="date" class="form-control form-control-lg" id="birthdayDate" name="birthday" />
+                    <label for="birthdayDate" class="form-label">Fecha de nacimiento</label>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                  <h6 class="mb-2 pb-1">Género: </h6>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="gender" id="femaleGender" value="Mujer" checked />
+                    <label class="form-check-label" for="femaleGender">Mujer</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="gender" id="maleGender" value="Hombre" />
+                    <label class="form-check-label" for="maleGender">Hombre</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="gender" id="otherGender" value="Otro" />
+                    <label class="form-check-label" for="otherGender">Otro</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-4 pb-2">
+                  <div data-mdb-input-init class="form-outline">
+                    <input type="email" id="emailAddress" name="email" class="form-control form-control-lg" required />
+                    <label class="form-label" for="emailAddress">Correo</label>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-4 pb-2">
+                  <div data-mdb-input-init class="form-outline">
+                    <input type="tel" id="phoneNumber" name="phone_number" class="form-control form-control-lg" />
+                    <label class="form-label" for="phoneNumber">Teléfono</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-4">
+                  <div data-mdb-input-init class="form-outline">
+                    <input type="password" id="password" name="password" class="form-control form-control-lg" required />
+                    <label class="form-label" for="password">Contraseña</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 pt-2">
+                <div class="row">
+                  <input data-mdb-ripple-init class="btn btn-primary btn-lg rounded-pill" type="submit" value="Crear cuenta" />
+                </div>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

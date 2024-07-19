@@ -12,11 +12,6 @@ def get_db():
         db = g._database = sqlite3.connect(DATABASE)
     return db
 
-# @auth_bp.teardown_appcontext
-# def close_connection(exception):
-#     db = getattr(g, '_database', None)
-#     if db is not None:
-#         db.close()
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -29,9 +24,10 @@ def login():
         if user and check_password_hash(user[2], password):
             session['user_id'] = user[0]
             session['user_name'] = user[1]
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard')) 
         return 'Invalid credentials', 401
     return render_template('login.html')
+
 
 @auth_bp.route('/logout')
 def logout():

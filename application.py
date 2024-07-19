@@ -37,7 +37,6 @@ def close_connection(exception):
 def dashboard():
     db = get_db()
     
-    # Obtener datos de ventas diarias
     daily_sales = db.execute('''
         SELECT DATE(order_time) as date, SUM(total_amount) as total_sales 
         FROM orders 
@@ -48,15 +47,14 @@ def dashboard():
 
     daily_sales = [{'date': row[0], 'total_sales': row[1]} for row in daily_sales]
 
-    # Obtener datos de usuarios
     users = db.execute('SELECT id, first_name, last_name, email FROM users').fetchall()
     users = [{'id': row[0], 'first_name': row[1], 'last_name': row[2], 'email': row[3]} for row in users]
 
-    # Obtener datos de platillos
     dishes = db.execute('SELECT id, name, price FROM dishes').fetchall()
     dishes = [{'id': row[0], 'name': row[1], 'price': row[2]} for row in dishes]
 
     return render_template('index.html', daily_sales=daily_sales, users=users, dishes=dishes)
+
 
 
 if __name__ == '__main__':

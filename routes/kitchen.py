@@ -2,41 +2,46 @@ from flask import Blueprint, render_template, g
 import sqlite3
 from .decorators import login_required
 
-kitchen_bp = Blueprint('kitchen', __name__)
+class KitchenRoutes:
+    def __init__(self, app):
+        self.blueprint = Blueprint('kitchen', __name__)
+        self.app = app
+        self.DATABASE = 'database.db'
+        self.setup_routes()
 
-DATABASE = 'database.db'
+    def setup_routes(self):
+        self.blueprint.route('/kitchen')(self.kitchen)
 
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-    return db
+    def get_db(self):
+        if not hasattr(g, '_database'):
+            g._database = sqlite3.connect(self.DATABASE)
+            g._database.row_factory = sqlite3.Row
+        return g._database
 
-@kitchen_bp.route('/kitchen')
-@login_required
-def kitchen():
-    db = get_db()
-    orders = db.execute('SELECT * FROM orders WHERE status = ? ORDER BY order_time', ('Pendiente',)).fetchall()
-    orders_with_items = []
-    priority = 1
-    for order in orders:
-        items = db.execute('SELECT dish_id, quantity, price FROM order_items WHERE order_id = ?', (order[0],)).fetchall()
-        order_items = []
-        for item in items:
-            dish = db.execute('SELECT name FROM dishes WHERE id = ?', (item[0],)).fetchone()
-            order_items.append({
-                'name': dish[0],
-                'quantity': item[1],
-                'price': item[2]
+    @login_required
+    def kitchen(self):
+        db = self.get_db()
+        orders = db.execute('SELECT * FROM orders WHERE status = ? ORDER BY order_time', ('Pendiente',)).fetchall()
+        orders_with_items = []
+        priority = 1
+        for order in orders:
+            items = db.execute('SELECT dish_id, quantity, price FROM order_items WHERE order_id = ?', (order['id'],)).fetchall()
+            order_items = []
+            for item in items:
+                dish = db.execute('SELECT name FROM dishes WHERE id = ?', (item['dish_id'],)).fetchone()
+                order_items.append({
+                    'name': dish['name'],
+                    'quantity': item['quantity'],
+                    'price': item['price']
+                })
+            orders_with_items.append({
+                'id': order['id'],
+                'table_number': order['table_number'],
+                'order_time': order['order_time'],
+                'status': order['status'],
+                'total_amount': order['total_amount'],
+                'items': order_items,
+                'priority': priority  # Agregar prioridad
             })
-        orders_with_items.append({
-            'id': order[0],
-            'table_number': order[1],
-            'order_time': order[2],
-            'status': order[3],
-            'total_amount': order[4],
-            'items': order_items,
-            'priority': priority  # Agregar prioridad
-        })
-        priority += 1
-    return render_template('kitchen.html', orders=orders_with_items)
+            priority += 1
+        return render_template('kitchen.html', orders=orders_with_items)

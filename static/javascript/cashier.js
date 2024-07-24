@@ -46,9 +46,10 @@ function calculateChange() {
   }
 }
 
-function completeOrder() {
+function cashierCompleteOrder() {
   const paymentAmount = parseFloat(document.getElementById('payment-amount').value);
   if (currentOrderId && paymentAmount) {
+    console.log(`Completing order ${currentOrderId} with payment amount ${paymentAmount}`);
     fetch('/orders/complete', {
       method: 'POST',
       headers: {
@@ -70,7 +71,9 @@ function completeOrder() {
   }
 }
 
+
 function printTicket(ticketContent) {
+  console.log(ticketContent)
   const printWindow = window.open('', '', 'width=400,height=600');
   printWindow.document.write('<html><head><title>Ticket de Venta</title>');
   printWindow.document.write('<style>body{font-family:"Courier New",Courier,monospace;max-width:400px;margin:auto;border:1px solid #000;padding:20px}.header,.footer{text-align:center;margin-bottom:20px}.header h2,.header h3,.footer p{margin:5px 0}.content{border-top:1px dashed #000;border-bottom:1px dashed #000;padding:10px 0}.content table{width:100%}.content table,.content th,.content td{border:none;border-collapse:collapse;text-align:left}.content th,.content td{padding:5px 0}.total{text-align:right;margin-top:10px}.barcode{text-align:center;margin-top:20px}</style>');
@@ -92,11 +95,11 @@ function printTicket(ticketContent) {
   });
   printWindow.document.write('</tbody></table></div>');
   printWindow.document.write('<div class="total"><p>Total Neto: $' + ticketContent.total_amount.toFixed(2) + '</p>');
-  printWindow.document.write('<p>Pago: $' + ticketContent.payment_amount.toFixed(2) + '</p>');
-  printWindow.document.write('<p>Cambio: $' + ticketContent.change_amount.toFixed(2) + '</p>');
+  printWindow.document.write('<p>Pago: $' + parseFloat(ticketContent.payment_amount).toFixed(2) + '</p>');
+  printWindow.document.write('<p>Cambio: $' + parseFloat(ticketContent.change_amount).toFixed(2) + '</p>');
   printWindow.document.write('</div>');
   printWindow.document.write('<div class="footer">');
-  printWindow.document.write('<p>Vendedor: ' + ticketContent.user_id + '</p>');
+  printWindow.document.write('<p>Vendedor: ' + ticketContent.user_name + '</p>');
   printWindow.document.write('<p>Folio Interno: ' + String(ticketContent.id).padStart(10, '0')  + '</p>');
   printWindow.document.write('<p>¡Gracias por su compra!</p>');
   printWindow.document.write('</div>');
@@ -126,8 +129,8 @@ function reprintTicket(orderId) {
         'total_amount': order.total_amount,
         'items': order.items,
         'payment_amount': order.payment_amount,
-        'change_amount': order.change,
-        'user_id': order.user_id
+        'change_amount': order.change_amount,
+        'user_name': order.user_name
       };
       printTicket(ticketContent);
     });

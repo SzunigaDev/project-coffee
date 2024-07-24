@@ -1,4 +1,6 @@
 let currentOrderId = null;
+let groupedOrders = [];
+let currentTableNumber = null;
 
 function showOrderDetails(orderId) {
   currentOrderId = orderId;
@@ -9,6 +11,7 @@ function showOrderDetails(orderId) {
         alertify.error('Pedido no encontrado');
         return;
       }
+      currentTableNumber = order.table_number;
       const orderDetails = document.getElementById('order-details');
       orderDetails.innerHTML = `
         <h5 class="card-title">Mesa ${order.table_number}</h5>
@@ -34,22 +37,63 @@ function showOrderDetails(orderId) {
       } else {
         document.getElementById('payment-amount').value = 0;
       }
+
+      document.getElementById('group-orders-btn').disabled = false;
     });
 }
 
-function calculateChange() {
-  const total = parseFloat(document.getElementById('order-total').value);
-  const paymentAmount = parseFloat(document.getElementById('payment-amount').value);
-  if (!isNaN(total) && !isNaN(paymentAmount)) {
-    const change = paymentAmount - total;
-    document.getElementById('change-amount').value = change.toFixed(2); 
-  }
+function groupOrders() {
+  fetch(`/cashier/group_orders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ table_number: currentTableNumber })
+  }).then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        alertify.error('Error al agrupar órdenes');
+        return;
+      }
+      groupedOrders = data.grouped_orders;
+      const orderDetails = document.getElementById('order-details');
+      orderDetails.innerHTML = `
+        <h5 class="card-title">Mesa ${currentTableNumber}</h5>
+        <h6>Órdenes agrupadas:</h6>
+        ${data.grouped_orders.map(order => `
+          <p>Orden ${order.id} - Total: $${order.total_amount}</p>
+          <ul>
+            ${order.items.map(item => `<li>${item.quantity} x ${item.name} - $${item.price}</li>`).join('')}
+          </ul>
+        `).join('')}
+        <p>Total agrupado: $${data.total_amount}</p>
+      `;
+
+      document.getElementById('order-total').value = data.total_amount;
+      document.getElementById('payment-amount').value = 0; // Resetear el monto de pago
+    });
 }
 
 function cashierCompleteOrder() {
   const paymentAmount = parseFloat(document.getElementById('payment-amount').value);
-  if (currentOrderId && paymentAmount) {
-    console.log(`Completing order ${currentOrderId} with payment amount ${paymentAmount}`);
+  if (groupedOrders.length > 0 && paymentAmount) {
+    fetch('/orders/complete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ orders: groupedOrders.map(order => order.id), payment_amount: paymentAmount })
+    }).then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alertify.success('Pedidos cobrados con éxito');
+          printTicket(data.ticket_content);
+          window.location.reload();
+        } else {
+          alertify.error('Hubo un problema al cobrar los pedidos');
+        }
+      });
+  } else if (currentOrderId && paymentAmount) {
     fetch('/orders/complete', {
       method: 'POST',
       headers: {
@@ -71,12 +115,10 @@ function cashierCompleteOrder() {
   }
 }
 
-
 function printTicket(ticketContent) {
-  console.log(ticketContent)
   const printWindow = window.open('', '', 'width=400,height=600');
   printWindow.document.write('<html><head><title>Ticket de Venta</title>');
-  printWindow.document.write('<style>body{font-family:"Courier New",Courier,monospace;max-width:400px;margin:auto;border:1px solid #000;padding:20px}.header,.footer{text-align:center;margin-bottom:20px}.header h2,.header h3,.footer p{margin:5px 0}.content{border-top:1px dashed #000;border-bottom:1px dashed #000;padding:10px 0}.content table{width:100%}.content table,.content th,.content td{border:none;border-collapse:collapse;text-align:left}.content th,.content td{padding:5px 0}.total{text-align:right;margin-top:10px}.barcode{text-align:center;margin-top:20px}</style>');
+  printWindow.document.write('<style>body{font-family:"Courier New",Courier,monospace;max-width:400px;margin:auto;border:1px solid #000;padding:20px}.header,.footer{text-align:center;margin-bottom:20px}.header h2,.header h3,.footer p{margin:5px 0}.content{border-top:1px dashed #000;border-bottom:1px dashed #000;padding:10px 0}.content table{width=100%}.content table,.content th,.content td{border:none;border-collapse:collapse;text-align:left}.content th,.content td{padding=5px 0}.total{text-align:right;margin-top=10px}.barcode{text-align=center;margin-top=20px}</style>');
   printWindow.document.write('</head><body>');
   printWindow.document.write('<div class="header">');
   printWindow.document.write('<h2>Mi Cafetería Feliz</h2>');
@@ -90,9 +132,21 @@ function printTicket(ticketContent) {
   printWindow.document.write('<table>');
   printWindow.document.write('<thead><tr><th>CANT</th><th>DESCRIPCIÓN</th><th>PRECIO</th><th>IMPORTE</th></tr></thead>');
   printWindow.document.write('<tbody>');
-  ticketContent.items.forEach(item => {
+  
+  if (Array.isArray(ticketContent.orders)) {
+    // Agrupación de órdenes
+    ticketContent.orders.forEach(order => {
+      order.items.forEach(item => {
+        printWindow.document.write('<tr><td>' + item.quantity + '</td><td>' + item.name + '</td><td>' + item.price.toFixed(2) + '</td><td>' + (item.price * item.quantity).toFixed(2) + '</td></tr>');
+      });
+    });
+  } else {
+    // Orden individual
+    ticketContent.items.forEach(item => {
       printWindow.document.write('<tr><td>' + item.quantity + '</td><td>' + item.name + '</td><td>' + item.price.toFixed(2) + '</td><td>' + (item.price * item.quantity).toFixed(2) + '</td></tr>');
-  });
+    });
+  }
+  
   printWindow.document.write('</tbody></table></div>');
   printWindow.document.write('<div class="total"><p>Total Neto: $' + ticketContent.total_amount.toFixed(2) + '</p>');
   printWindow.document.write('<p>Pago: $' + parseFloat(ticketContent.payment_amount).toFixed(2) + '</p>');
@@ -113,7 +167,6 @@ function printTicket(ticketContent) {
   printWindow.print();
 }
 
-
 function reprintTicket(orderId) {
   fetch(`/orders/${orderId}`)
     .then(response => response.json())
@@ -123,7 +176,7 @@ function reprintTicket(orderId) {
         return;
       }
       const ticketContent = {
-        'id':order.id,
+        'id': order.id,
         'table_number': order.table_number,
         'order_time': order.order_time,
         'total_amount': order.total_amount,

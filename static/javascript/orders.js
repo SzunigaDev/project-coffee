@@ -18,6 +18,24 @@ function addDish(id, name, price) {
   updateOrderList();
 }
 
+function increaseDish(id) {
+  const dish = dishes.find(dish => dish.id === id);
+  if (dish) {
+    dish.quantity++;
+  }
+  updateOrderList();
+}
+
+function decreaseDish(id) {
+  const dish = dishes.find(dish => dish.id === id);
+  if (dish && dish.quantity > 1) {
+    dish.quantity--;
+  } else {
+    dishes = dishes.filter(dish => dish.id !== id);
+  }
+  updateOrderList();
+}
+
 function removeDish(id) {
   dishes = dishes.filter(dish => dish.id !== id);
   updateOrderList();
@@ -37,9 +55,17 @@ function updateOrderList() {
           Precio Unitario: $${dish.price.toFixed(2)} x ${dish.quantity} = $${(dish.price * dish.quantity).toFixed(2)}
         </div>
         <span class="badge text-bg-primary rounded-pill">${dish.quantity}</span>
-        <button type="button" class="btn btn-danger btn-sm ms-3 rounded-circle" onclick="removeDish('${dish.id}')">
-          <i class="fas fa-trash-alt"></i>
-        </button>
+        <div class="btn-group-vertical ms-3" role="group">
+          <button type="button" class="btn btn-success btn-sm rounded-circle my-1" onclick="increaseDish('${dish.id}')">
+            <i class="fas fa-plus"></i>
+          </button>
+          <button type="button" class="btn btn-warning btn-sm rounded-circle my-1" onclick="decreaseDish('${dish.id}')">
+            <i class="fas fa-minus"></i>
+          </button>
+          <button type="button" class="btn btn-danger btn-sm rounded-circle my-1" onclick="removeDish('${dish.id}')">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
       `;
     orderList.appendChild(listItem);
     total += dish.price * dish.quantity;

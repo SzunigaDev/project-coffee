@@ -19,6 +19,7 @@ class CashierRoutes:
         Configura las rutas para el cajero.
         """
         self.blueprint.route('/cashier')(self.cashier)
+        self.blueprint.route('/cashier/group_orders', methods=['POST'])(self.group_orders)
 
     def get_db(self):
         """
@@ -62,3 +63,40 @@ class CashierRoutes:
                 'items': order_items
             })
         return render_template('cashier.html', orders=orders_with_items)
+
+    @login_required
+    def group_orders(self):
+        """
+        Agrupa todas las órdenes para una mesa específica.
+        
+        :return: Devuelve un JSON con las órdenes agrupadas y el total.
+        """
+        data = request.get_json()
+        table_number = data['table_number']
+
+        db = self.get_db()
+        grouped_orders = db.execute('SELECT * FROM orders WHERE table_number = ? AND status != ?', (table_number, 'Pagado')).fetchall()
+
+        total_amount = 0
+        orders_with_items = []
+        for order in grouped_orders:
+            items = db.execute('SELECT dish_id, quantity, price FROM order_items WHERE order_id = ?', (order['id'],)).fetchall()
+            order_items = []
+            for item in items:
+                dish = db.execute('SELECT name FROM dishes WHERE id = ?', (item['dish_id'],)).fetchone()
+                order_items.append({
+                    'name': dish['name'],
+                    'quantity': item['quantity'],
+                    'price': item['price']
+                })
+            orders_with_items.append({
+                'id': order['id'],
+                'table_number': order['table_number'],
+                'order_time': order['order_time'],
+                'status': order['status'],
+                'total_amount': order['total_amount'],
+                'items': order_items
+            })
+            total_amount += order['total_amount']
+
+        return jsonify({'grouped_orders': orders_with_items, 'total_amount': total_amount})

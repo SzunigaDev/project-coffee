@@ -34,7 +34,12 @@
         <input type="number" class="form-control" id="payment-amount">
       </div>
       <div class="row mx-1">
-        <button class="btn btn-success btn-sm rounded-pill mx-auto" onclick="cashierCompleteOrder()">Cobrar</button>
+        <div class="col-md-8">
+          <button class="btn btn-success btn-sm rounded-pill mx-auto d-block w-100" onclick="cashierCompleteOrder()">Cobrar</button>
+        </div>
+        <div class="col-md-4">
+          <button class="btn btn-primary btn-sm rounded-pill mx-auto d-block w-100" id="group-orders-btn" onclick="groupOrders()" disabled>Agrupar órdenes de la mesa</button>
+        </div>
       </div>
     </div>
   </div>

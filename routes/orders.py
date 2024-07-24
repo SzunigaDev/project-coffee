@@ -63,8 +63,14 @@ class OrdersRoutes:
         dishes = data['dishes']
         order_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        db.execute('INSERT INTO orders (table_number, order_time, status, total_amount, payment_amount, change_amount) VALUES (?, ?, ?, ?, ?, ?)', 
-                   (table_number, order_time, 'Pendiente', 0, 0, 0))
+        # Obtener el número de orden más alto para la mesa actual
+        highest_order_number = db.execute('SELECT MAX(order_number) FROM orders WHERE table_number = ?', (table_number,)).fetchone()[0]
+        if highest_order_number is None:
+            highest_order_number = 0
+        new_order_number = highest_order_number + 1
+
+        db.execute('INSERT INTO orders (table_number, order_time, status, total_amount, payment_amount, change_amount, order_number) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+                   (table_number, order_time, 'Pendiente', 0, 0, 0, new_order_number))
         order_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
 
         total_amount = 0
@@ -128,46 +134,89 @@ class OrdersRoutes:
         """
         db = self.get_db()
         data = request.get_json()
-        order_id = data['order_id']
         payment_amount = float(data['payment_amount'])
         
-        order = db.execute('SELECT id, table_number, order_time, total_amount FROM orders WHERE id = ?', (order_id,)).fetchone()
-        items = db.execute('SELECT dish_id, quantity, price FROM order_items WHERE order_id = ?', (order_id,)).fetchall()
-        order_items = []
-        for item in items:
-            dish = db.execute('SELECT name FROM dishes WHERE id = ?', (item['dish_id'],)).fetchone()
-            order_items.append({
-                'name': dish['name'],
-                'quantity': item['quantity'],
-                'price': item['price']
-            })
-        
-        total_amount = order['total_amount']
-        change = payment_amount - total_amount
+        if 'orders' in data:
+            orders = data['orders']
+            ticket_content = {
+                'orders': [],
+                'total_amount': 0,
+                'payment_amount': payment_amount,
+                'change_amount': 0,
+                'user_name': ''
+            }
+            total_amount = 0
 
-        print(f"Total amount: {total_amount}, Change: {change}")
+            for order_id in orders:
+                order = db.execute('SELECT id, table_number, order_time, total_amount FROM orders WHERE id = ?', (order_id,)).fetchone()
+                items = db.execute('SELECT dish_id, quantity, price FROM order_items WHERE order_id = ?', (order_id,)).fetchall()
+                order_items = []
+                for item in items:
+                    dish = db.execute('SELECT name FROM dishes WHERE id = ?', (item['dish_id'],)).fetchone()
+                    order_items.append({
+                        'name': dish['name'],
+                        'quantity': item['quantity'],
+                        'price': item['price']
+                    })
+                
+                total_amount += order['total_amount']
+                db.execute('UPDATE orders SET status = ?, payment_amount = ?, change_amount = ?, cashier_id = ? WHERE id = ?', 
+                           ('Pagado', payment_amount, 0, session['user_id'], order_id))
 
-        db.execute('UPDATE orders SET status = ?, payment_amount = ?, change_amount = ?, cashier_id = ? WHERE id = ?', 
-                   ('Pagado', payment_amount, change, session['user_id'], order_id))
-        db.commit()
-        
-        user_name = db.execute('SELECT first_name, last_name FROM users WHERE id = ?', (session['user_id'],)).fetchone()
-        full_user_name = f"{user_name['first_name']} {user_name['last_name']}" if user_name else "Usuario no encontrado"
+                ticket_content['orders'].append({
+                    'id': order['id'],
+                    'table_number': order['table_number'],
+                    'order_time': order['order_time'],
+                    'total_amount': order['total_amount'],
+                    'items': order_items,
+                    'payment_amount': payment_amount,
+                    'change_amount': 0,
+                })
 
-        ticket_content = {
-            'id': order['id'],
-            'table_number': order['table_number'],
-            'order_time': order['order_time'],
-            'total_amount': total_amount,
-            'items': order_items,
-            'payment_amount': payment_amount,
-            'change_amount': change,
-            'user_name': full_user_name
-        }
+            change = payment_amount - total_amount
+            ticket_content['total_amount'] = total_amount
+            ticket_content['change_amount'] = change
 
-        print(f"Ticket content: {ticket_content}")
-        
-        return jsonify({'success': True, 'ticket_content': ticket_content})
+            user_name = db.execute('SELECT first_name, last_name FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+            ticket_content['user_name'] = f"{user_name['first_name']} {user_name['last_name']}" if user_name else "Usuario no encontrado"
+
+            db.commit()
+            return jsonify({'success': True, 'ticket_content': ticket_content})
+        else:
+            order_id = data['order_id']
+            order = db.execute('SELECT id, table_number, order_time, total_amount FROM orders WHERE id = ?', (order_id,)).fetchone()
+            items = db.execute('SELECT dish_id, quantity, price FROM order_items WHERE order_id = ?', (order_id,)).fetchall()
+            order_items = []
+            for item in items:
+                dish = db.execute('SELECT name FROM dishes WHERE id = ?', (item['dish_id'],)).fetchone()
+                order_items.append({
+                    'name': dish['name'],
+                    'quantity': item['quantity'],
+                    'price': item['price']
+                })
+            
+            total_amount = order['total_amount']
+            change = payment_amount - total_amount
+
+            db.execute('UPDATE orders SET status = ?, payment_amount = ?, change_amount = ?, cashier_id = ? WHERE id = ?', 
+                       ('Pagado', payment_amount, change, session['user_id'], order_id))
+            db.commit()
+            
+            user_name = db.execute('SELECT first_name, last_name FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+            full_user_name = f"{user_name['first_name']} {user_name['last_name']}" if user_name else "Usuario no encontrado"
+
+            ticket_content = {
+                'id': order['id'],
+                'table_number': order['table_number'],
+                'order_time': order['order_time'],
+                'total_amount': total_amount,
+                'items': order_items,
+                'payment_amount': payment_amount,
+                'change_amount': change,
+                'user_name': full_user_name
+            }
+
+            return jsonify({'success': True, 'ticket_content': ticket_content})
 
     @login_required
     def update_order_status(self):

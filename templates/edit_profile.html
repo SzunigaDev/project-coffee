@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+
+{% block title %}Editar Perfil{% endblock %}
+
+{% block content %}
+<h1 class="text-center text-light">Editar Perfil</h1>
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="post" action="{{ url_for('users.edit_profile') }}" enctype="multipart/form-data">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="first_name" class="form-label">Nombre(s)</label>
+            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="last_name" class="form-label">Apellidos</label>
+            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="birthday" class="form-label">Fecha de nacimiento</label>
+            <input type="date" class="form-control" id="birthday" name="birthday" value="{{ user.birthday }}">
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="email" class="form-label">Correo</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="phone_number" class="form-label">Teléfono</label>
+            <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{ user.phone_number }}">
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="profile_picture" class="form-label">Foto de Perfil</label>
+            <input type="file" class="form-control" id="profile_picture" name="profile_picture" >
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="bio" class="form-label">Biografía</label>
+        <textarea class="form-control" id="bio" name="bio">{{ user.bio }}</textarea>
+      </div>
+      <div class="mb-3">
+        <label for="address" class="form-label">Dirección</label>
+        <textarea class="form-control" id="address" name="address">{{ user.address }}</textarea>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <label class="form-label">Género:</label>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="gender" value="Mujer" id="female" {% if user.gender == 'Mujer' %}checked{% endif %}>
+            <label class="form-check-label" for="female">Mujer</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="gender" value="Hombre" id="male" {% if user.gender == 'Hombre' %}checked{% endif %}>
+            <label class="form-check-label" for="male">Hombre</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="gender" value="Otro" id="other" {% if user.gender == 'Otro' %}checked{% endif %}>
+            <label class="form-check-label" for="other">Otro</label>
+          </div>
+        </div>
+        <div class="col-md-6 text-end">
+          <button type="submit" class="btn btn-success">Guardar Cambios</button>
+        </div>  
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS dishes (
 )
 ''')
 
-# Crear tabla de pedidos
+# Crear tabla de pedidos con el nuevo campo cashier_id
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,7 +45,9 @@ CREATE TABLE IF NOT EXISTS orders (
     status TEXT NOT NULL,
     total_amount REAL,
     payment_amount REAL,
-    change_amount REAL
+    change_amount REAL,
+    cashier_id INTEGER NULL,
+    FOREIGN KEY (cashier_id) REFERENCES users(id)
 )
 ''')
 

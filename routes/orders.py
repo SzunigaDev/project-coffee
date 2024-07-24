@@ -5,12 +5,20 @@ from .decorators import login_required
 
 class OrdersRoutes:
     def __init__(self, app):
+        """
+        Inicializa el blueprint de pedidos y configura la base de datos.
+        
+        :param app: La instancia de la aplicación Flask.
+        """
         self.blueprint = Blueprint('orders', __name__)
         self.app = app
         self.DATABASE = 'database.db'
         self.setup_routes()
 
     def setup_routes(self):
+        """
+        Configura las rutas para la gestión de pedidos.
+        """
         self.blueprint.route('/orders', methods=['GET', 'POST'])(self.orders)
         self.blueprint.route('/orders/create', methods=['POST'])(self.create_order)
         self.blueprint.route('/orders/<int:order_id>', methods=['GET'])(self.get_order)
@@ -18,6 +26,12 @@ class OrdersRoutes:
         self.blueprint.route('/orders/update_status', methods=['POST'])(self.update_order_status)
 
     def get_db(self):
+        """
+        Obtiene una conexión a la base de datos SQLite. Si no existe una conexión activa,
+        se crea una nueva.
+        
+        :return: Conexión a la base de datos.
+        """
         if not hasattr(g, '_database'):
             g._database = sqlite3.connect(self.DATABASE)
             g._database.row_factory = sqlite3.Row
@@ -25,6 +39,12 @@ class OrdersRoutes:
 
     @login_required
     def orders(self):
+        """
+        Maneja la lógica para la página de gestión de pedidos, permitiendo crear
+        y listar pedidos.
+        
+        :return: Renderiza la plantilla 'orders.html' con los datos de los pedidos y los platos.
+        """
         db = self.get_db()
         orders = db.execute('SELECT * FROM orders').fetchall()
         dishes = db.execute('SELECT * FROM dishes').fetchall()
@@ -32,6 +52,11 @@ class OrdersRoutes:
 
     @login_required
     def create_order(self):
+        """
+        Maneja la lógica para la creación de un nuevo pedido.
+        
+        :return: Devuelve un JSON indicando si la creación del pedido fue exitosa.
+        """
         db = self.get_db()
         data = request.get_json()
         table_number = data['table_number']
@@ -55,10 +80,16 @@ class OrdersRoutes:
 
     @login_required
     def get_order(self, order_id):
+        """
+        Maneja la lógica para obtener los detalles de un pedido específico.
+        
+        :param order_id: ID del pedido a obtener.
+        :return: Devuelve un JSON con los datos del pedido.
+        """
         db = self.get_db()
         orders = db.execute('SELECT id, table_number, order_time, status, total_amount FROM orders WHERE status = ? ORDER BY order_time', ('Pendiente',)).fetchall()
         order_dict = {order['id']: index + 1 for index, order in enumerate(orders)}
-        order = db.execute('SELECT id, table_number, order_time, status, total_amount, payment_amount, change_amount FROM orders WHERE id = ?', (order_id,)).fetchone()
+        order = db.execute('SELECT id, table_number, order_time, status, total_amount, payment_amount, change_amount, cashier_id FROM orders WHERE id = ?', (order_id,)).fetchone()
         if not order:
             return jsonify({'error': 'Order not found'}), 404
         items = db.execute('SELECT dish_id, quantity, price FROM order_items WHERE order_id = ?', (order_id,)).fetchall()
@@ -71,8 +102,8 @@ class OrdersRoutes:
                 'price': item['price']
             })
         
-        user_name = db.execute('SELECT first_name, last_name FROM users WHERE id = ?', (session.get('user_id'),)).fetchone()
-        full_user_name = f"{user_name['first_name']} {user_name['last_name']}"
+        user_name = db.execute('SELECT first_name, last_name FROM users WHERE id = ?', (order['cashier_id'],)).fetchone()
+        full_user_name = f"{user_name['first_name']} {user_name['last_name']}" if user_name else "Usuario no encontrado"
 
         order_data = {
             'id': order['id'],
@@ -90,6 +121,11 @@ class OrdersRoutes:
 
     @login_required
     def complete_order(self):
+        """
+        Maneja la lógica para completar un pedido, actualizando el estado y calculando el cambio.
+        
+        :return: Devuelve un JSON indicando si la operación fue exitosa junto con el contenido del ticket.
+        """
         db = self.get_db()
         data = request.get_json()
         order_id = data['order_id']
@@ -111,14 +147,15 @@ class OrdersRoutes:
 
         print(f"Total amount: {total_amount}, Change: {change}")
 
-        db.execute('UPDATE orders SET status = ?, payment_amount = ?, change_amount = ? WHERE id = ?', 
-                   ('Pagado', payment_amount, change, order_id))
+        db.execute('UPDATE orders SET status = ?, payment_amount = ?, change_amount = ?, cashier_id = ? WHERE id = ?', 
+                   ('Pagado', payment_amount, change, session['user_id'], order_id))
         db.commit()
         
-        user_name = db.execute('SELECT first_name, last_name FROM users WHERE id = ?', (session.get('user_id'),)).fetchone()
-        full_user_name = f"{user_name['first_name']} {user_name['last_name']}"
+        user_name = db.execute('SELECT first_name, last_name FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+        full_user_name = f"{user_name['first_name']} {user_name['last_name']}" if user_name else "Usuario no encontrado"
 
         ticket_content = {
+            'id': order['id'],
             'table_number': order['table_number'],
             'order_time': order['order_time'],
             'total_amount': total_amount,
@@ -132,9 +169,13 @@ class OrdersRoutes:
         
         return jsonify({'success': True, 'ticket_content': ticket_content})
 
-
     @login_required
     def update_order_status(self):
+        """
+        Maneja la lógica para actualizar el estado de un pedido a 'Completo'.
+        
+        :return: Devuelve un JSON indicando si la operación fue exitosa.
+        """
         db = self.get_db()
         data = request.get_json()
         order_id = data['order_id']
